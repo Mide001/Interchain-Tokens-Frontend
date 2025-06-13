@@ -76,14 +76,14 @@ export default function LaunchPage() {
       {/* Search Section */}
       <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
         <div className="flex flex-col gap-8">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent font-plus-jakarta text-center">
+          <h1 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center">
             Deploy your multichain token
           </h1>
 
           <div className="flex gap-4">
             <input
               type="text"
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 transition-all duration-200 hover:border-gray-300"
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
               placeholder="Search for any token address"
             />
             <div className="relative w-48">
@@ -132,19 +132,19 @@ export default function LaunchPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 shadow-xl">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent font-plus-jakarta">
+              <h2 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center w-full">
                 Deploy token on {networks.find(n => n.id === selectedNetwork)?.name}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 absolute right-8"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700 font-inter">
                     Token Name
@@ -154,7 +154,7 @@ export default function LaunchPage() {
                     name="tokenName"
                     value={formData.tokenName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
                     placeholder="e.g., MyToken"
                     required
                   />
@@ -168,7 +168,7 @@ export default function LaunchPage() {
                     name="tokenSymbol"
                     value={formData.tokenSymbol}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
                     placeholder="e.g., MTK"
                     required
                   />
@@ -182,7 +182,7 @@ export default function LaunchPage() {
                     name="decimals"
                     value={formData.decimals}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
                     placeholder="e.g., 18"
                     required
                   />
@@ -196,7 +196,7 @@ export default function LaunchPage() {
                     name="totalSupply"
                     value={formData.totalSupply}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
                     placeholder="e.g., 1000000"
                     required
                   />
@@ -215,7 +215,7 @@ export default function LaunchPage() {
                   type="submit"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
                 >
-                  Register and Deploy
+                  Register & Deploy
                 </button>
               </div>
             </form>
