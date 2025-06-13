@@ -83,14 +83,14 @@ export default function LaunchPage() {
           <div className="flex gap-4">
             <input
               type="text"
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
+              className="flex-1 px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
               placeholder="Search for any token address"
             />
             <div className="relative w-48">
               <select
                 value={selectedNetwork}
                 onChange={(e) => setSelectedNetwork(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 transition-all duration-200 hover:border-gray-300 appearance-none"
+                className="w-full px-4 py-3 pl-10 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold text-sm transition-all duration-200 hover:border-blue-300 appearance-none"
               >
                 {networks.map((network) => (
                   <option key={network.id} value={network.id}>
@@ -102,8 +102,8 @@ export default function LaunchPage() {
                 {networks.find(n => n.id === selectedNetwork)?.logo}
               </div>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
             </div>
@@ -120,9 +120,9 @@ export default function LaunchPage() {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
           >
-            Deploy new token
+            Deploy New Token
           </button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function LaunchPage() {
                     name="tokenName"
                     value={formData.tokenName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., MyToken"
                     required
                   />
@@ -168,7 +168,7 @@ export default function LaunchPage() {
                     name="tokenSymbol"
                     value={formData.tokenSymbol}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., MTK"
                     required
                   />
@@ -182,7 +182,7 @@ export default function LaunchPage() {
                     name="decimals"
                     value={formData.decimals}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., 18"
                     required
                   />
@@ -196,7 +196,7 @@ export default function LaunchPage() {
                     name="totalSupply"
                     value={formData.totalSupply}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 text-gray-900 transition-all duration-200 hover:border-gray-300"
+                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., 1000000"
                     required
                   />
