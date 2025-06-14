@@ -58,10 +58,12 @@ export default function Sidebar({ userProfile }: SidebarProps) {
             </h1>
           </div>
 
-          <div className="flex-1 flex flex-col pt-20 pb-4 overflow-y-auto">
+          <div className="flex-1 flex flex-col pt-12 pb-4 overflow-y-auto">
             <nav className="flex-1 px-6 space-y-4">
               {navigation.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = item.href === '/launch' 
+                  ? pathname === item.href || pathname.startsWith('/token/')
+                  : pathname === item.href;
                 return (
                   <Link
                     key={item.name}

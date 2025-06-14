@@ -3,10 +3,15 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useNetwork } from "@/hooks/useNetwork";
+import { useRouter } from "next/navigation";
+import { isAddress } from "viem";
 
 export default function LaunchPage() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { currentNetwork, supportedNetworks } = useNetwork();
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenAddress, setTokenAddress] = useState("");
   const [formData, setFormData] = useState({
     tokenName: "",
     tokenSymbol: "",
@@ -65,6 +70,20 @@ export default function LaunchPage() {
     console.log(formData);
   };
 
+  const handleTokenAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const address = e.target.value;
+    setTokenAddress(address);
+    
+    if (isAddress(address)) {
+      setIsLoading(true);
+      // Simulate a small delay for the loading animation
+      setTimeout(() => {
+        setIsLoading(false);
+        router.push(`/token/${address}`);
+      }, 1000);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6">
       {/* Search Section */}
@@ -75,11 +94,20 @@ export default function LaunchPage() {
           </h1>
 
           <div className="flex gap-4">
-            <input
-              type="text"
-              className="flex-1 px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
-              placeholder="Search for any token address"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={tokenAddress}
+                onChange={handleTokenAddressChange}
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                placeholder="Search for any token address"
+              />
+              {isLoading && (
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                </div>
+              )}
+            </div>
             <div className="relative w-48">
               <select
                 value={currentNetwork?.id || ''}
