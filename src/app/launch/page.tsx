@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import NetworkDropdown from "@/components/ui/NetworkDropdown";
+import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 
 export default function LaunchPage() {
+  const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState("sepolia");
   const [formData, setFormData] = useState({
@@ -12,6 +15,16 @@ export default function LaunchPage() {
     decimals: "18",
     totalSupply: "",
   });
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading skeleton until mounted
+  if (!mounted) {
+    return <LoadingSkeleton />;
+  }
 
   const networks = [
     { 
@@ -72,44 +85,66 @@ export default function LaunchPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-6">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
       {/* Search Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-        <div className="flex flex-col gap-8">
-          <h1 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col gap-6 sm:gap-8">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 font-plus-jakarta text-center">
             Deploy your multichain token
           </h1>
 
-          <div className="flex gap-4">
+          {/* Mobile Search Layout */}
+          <div className="block sm:hidden space-y-4">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md text-lg"
+            >
+              Deploy New Token
+            </button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-4 bg-white text-sm text-gray-400 font-medium font-inter">OR</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="w-full">
+                <NetworkDropdown
+                  networks={networks}
+                  selectedNetwork={selectedNetwork}
+                  onNetworkChange={setSelectedNetwork}
+                />
+              </div>
+              <input
+                type="text"
+                className="w-full px-4 py-4 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                placeholder="Search for any token address"
+              />
+            </div>
+          </div>
+
+          {/* Desktop Search Layout */}
+          <div className="hidden sm:flex gap-4">
             <input
               type="text"
               className="flex-1 px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
               placeholder="Search for any token address"
             />
-            <div className="relative w-48">
-              <select
-                value={selectedNetwork}
-                onChange={(e) => setSelectedNetwork(e.target.value)}
-                className="w-full px-4 py-3 pl-10 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold text-sm transition-all duration-200 hover:border-blue-300 appearance-none"
-              >
-                {networks.map((network) => (
-                  <option key={network.id} value={network.id}>
-                    {network.name}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                {networks.find(n => n.id === selectedNetwork)?.logo}
-              </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
+            <div className="w-auto">
+              <NetworkDropdown
+                networks={networks}
+                selectedNetwork={selectedNetwork}
+                onNetworkChange={setSelectedNetwork}
+              />
             </div>
           </div>
 
-          <div className="relative">
+          {/* Desktop OR Separator */}
+          <div className="hidden sm:block relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-100"></div>
             </div>
@@ -118,33 +153,44 @@ export default function LaunchPage() {
             </div>
           </div>
 
+          {/* Desktop Deploy Button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
+            className="hidden sm:block w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
           >
             Deploy New Token
           </button>
         </div>
       </div>
 
-      {/* Deploy Token Modal */}
+      {/* Deploy Token Modal - Bottom Sheet on Mobile */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 shadow-xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center w-full">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50">
+          <div 
+            className={`
+              bg-white rounded-t-[20px] sm:rounded-xl w-full sm:max-w-2xl mx-auto 
+              p-4 sm:p-6 lg:p-8 shadow-xl relative max-h-[90vh] overflow-y-auto
+              transform transition-transform duration-300 ease-out
+              translate-y-0 sm:translate-y-0
+            `}
+          >
+            {/* Mobile Pull Indicator */}
+            <div className="block sm:hidden w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" />
+            
+            <div className="flex justify-between items-center mb-6 sm:mb-8 sticky top-0 bg-white pb-4 border-b">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-plus-jakarta pr-8">
                 Deploy token on {networks.find(n => n.id === selectedNetwork)?.name}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 absolute right-8"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 absolute right-4 sm:right-6 lg:right-8 top-4 sm:top-6 lg:top-8"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700 font-inter">
                     Token Name
@@ -154,7 +200,7 @@ export default function LaunchPage() {
                     name="tokenName"
                     value={formData.tokenName}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                    className="w-full px-4 py-4 sm:py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., MyToken"
                     required
                   />
@@ -168,7 +214,7 @@ export default function LaunchPage() {
                     name="tokenSymbol"
                     value={formData.tokenSymbol}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                    className="w-full px-4 py-4 sm:py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., MTK"
                     required
                   />
@@ -182,7 +228,7 @@ export default function LaunchPage() {
                     name="decimals"
                     value={formData.decimals}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                    className="w-full px-4 py-4 sm:py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., 18"
                     required
                   />
@@ -196,26 +242,26 @@ export default function LaunchPage() {
                     name="totalSupply"
                     value={formData.totalSupply}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                    className="w-full px-4 py-4 sm:py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
                     placeholder="e.g., 1000000"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex justify-between pt-6">
+              <div className="flex flex-col gap-3 pt-6 border-t">
+                <button
+                  type="submit"
+                  className="w-full px-6 py-4 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md text-lg sm:text-base"
+                >
+                  Register & Deploy
+                </button>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 font-inter"
+                  className="w-full px-6 py-4 sm:py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 font-inter text-lg sm:text-base"
                 >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
-                >
-                  Register & Deploy
+                  Cancel
                 </button>
               </div>
             </form>
