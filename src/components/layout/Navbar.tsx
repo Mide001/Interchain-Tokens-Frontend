@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import { useTruncateAddress } from "@/hooks/useTruncateAddress";
+import { NetworkSwitcher } from "@/components/NetworkSwitcher";
+import { WalletDetails } from "@/components/WalletDetails";
+import { SettingsDropdown } from "@/components/SettingsDropdown";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { authenticated, login, logout } = usePrivy();
+  const { authenticated, login, user } = usePrivy();
+  const { truncateAddress } = useTruncateAddress();
 
   return (
     <nav className="bg-white border-b border-gray-200">
@@ -26,32 +31,35 @@ export default function Navbar() {
           {/* Right side - Desktop menu */}
           <div className="hidden lg:flex lg:items-center space-x-6">
             {/* Notification Icon */}
-            <button className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">
-              <svg
-                className="h-7 w-7"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
-            
-            {/* Login/Logout Button */}
-            {authenticated ? (
-              <button 
-                onClick={logout}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 font-inter"
-              >
-                Logout
+            {authenticated && (
+              <button className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                <svg
+                  className="h-7 w-7"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
               </button>
+            )}
+            
+            {/* Wallet Details */}
+            {authenticated && <WalletDetails />}
+
+            {/* Network Switcher */}
+            {authenticated && <NetworkSwitcher />}
+
+            {/* Settings Dropdown */}
+            {authenticated ? (
+              <SettingsDropdown />
             ) : (
-              <button 
+              <button
                 onClick={login}
                 className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 font-inter"
               >
@@ -105,6 +113,20 @@ export default function Navbar() {
       <div className={`lg:hidden ${isMobileMenuOpen ? "block" : "hidden"}`}>
         <div className="pt-2 pb-3 space-y-1">
           <div className="px-4 py-3 space-y-3">
+            {/* Network Switcher for mobile */}
+            {authenticated && (
+              <div className="px-4">
+                <NetworkSwitcher />
+              </div>
+            )}
+
+            {/* Wallet Details for mobile */}
+            {authenticated && (
+              <div className="px-4">
+                <WalletDetails />
+              </div>
+            )}
+
             <button className="w-full flex items-center px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg font-inter">
               <svg
                 className="mr-3 h-6 w-6 text-gray-400"
@@ -124,29 +146,13 @@ export default function Navbar() {
                 3
               </span>
             </button>
-            
+
             {authenticated ? (
-              <button 
-                onClick={logout}
-                className="w-full flex items-center px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg font-inter"
-              >
-                <svg
-                  className="mr-3 h-6 w-6 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-                Logout
-              </button>
+              <div className="px-4">
+                <SettingsDropdown />
+              </div>
             ) : (
-              <button 
+              <button
                 onClick={login}
                 className="w-full flex items-center px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg font-inter"
               >
