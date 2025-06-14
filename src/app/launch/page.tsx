@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useNetwork } from "@/hooks/useNetwork";
 
 export default function LaunchPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedNetwork, setSelectedNetwork] = useState("sepolia");
+  const { currentNetwork, supportedNetworks } = useNetwork();
   const [formData, setFormData] = useState({
     tokenName: "",
     tokenSymbol: "",
@@ -13,49 +14,42 @@ export default function LaunchPage() {
     totalSupply: "",
   });
 
-  const networks = [
-    { 
-      id: "sepolia", 
-      name: "Ethereum Sepolia",
-      logo: (
-        <svg className="w-5 h-5" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#627EEA"/>
-          <path d="M16.498 4V12.87L23.995 16.22L16.498 4Z" fill="#C0CBF6"/>
-          <path d="M16.498 4L9 16.22L16.498 12.87V4Z" fill="white"/>
-          <path d="M16.498 21.968V27.995L24 17.616L16.498 21.968Z" fill="#C0CBF6"/>
-          <path d="M16.498 27.995V21.967L9 17.616L16.498 27.995Z" fill="white"/>
-          <path d="M16.498 20.573L23.995 16.22L16.498 12.872V20.573Z" fill="#8197EE"/>
-          <path d="M9 16.22L16.498 20.573V12.872L9 16.22Z" fill="#C0CBF6"/>
-        </svg>
-      )
-    },
-    { 
-      id: "base-sepolia", 
-      name: "Base Sepolia",
-      logo: (
-        <Image
-          src="/assets/logo/base-logo.svg"
-          alt="Base Logo"
-          width={20}
-          height={20}
-          className="w-5 h-5"
-        />
-      )
-    },
-    { 
-      id: "optimism-sepolia", 
-      name: "Optimism Sepolia",
-      logo: (
-        <Image
-          src="/assets/logo/op-logo.svg"
-          alt="Optimism Logo"
-          width={20}
-          height={20}
-          className="w-5 h-5"
-        />
-      )
-    },
-  ];
+  const getNetworkLogo = (networkName: string) => {
+    switch (networkName.toLowerCase()) {
+      case 'base sepolia':
+        return (
+          <Image
+            src="/assets/logo/base-logo.svg"
+            alt="Base Logo"
+            width={20}
+            height={20}
+            className="w-5 h-5"
+          />
+        );
+      case 'optimism sepolia':
+        return (
+          <Image
+            src="/assets/logo/op-logo.svg"
+            alt="Optimism Logo"
+            width={20}
+            height={20}
+            className="w-5 h-5"
+          />
+        );
+      case 'sepolia':
+        return (
+          <Image
+            src="/assets/logo/eth-logo.svg"
+            alt="Ethereum Logo"
+            width={20}
+            height={20}
+            className="w-5 h-5"
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -88,18 +82,18 @@ export default function LaunchPage() {
             />
             <div className="relative w-48">
               <select
-                value={selectedNetwork}
-                onChange={(e) => setSelectedNetwork(e.target.value)}
+                value={currentNetwork?.id || ''}
                 className="w-full px-4 py-3 pl-10 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold text-sm transition-all duration-200 hover:border-blue-300 appearance-none"
+                disabled
               >
-                {networks.map((network) => (
+                {supportedNetworks.map((network) => (
                   <option key={network.id} value={network.id}>
                     {network.name}
                   </option>
                 ))}
               </select>
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                {networks.find(n => n.id === selectedNetwork)?.logo}
+                {currentNetwork && getNetworkLogo(currentNetwork.name)}
               </div>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +127,7 @@ export default function LaunchPage() {
           <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 shadow-xl">
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center w-full">
-                Deploy token on {networks.find(n => n.id === selectedNetwork)?.name}
+                Deploy token on {currentNetwork?.name}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
