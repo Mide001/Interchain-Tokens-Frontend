@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useRouter } from "next/navigation";
 import { isAddress } from "viem";
+import DeployTokenModal from "@/components/DeployTokenModal";
 
 export default function LaunchPage() {
   const router = useRouter();
@@ -150,100 +151,14 @@ export default function LaunchPage() {
       </div>
 
       {/* Deploy Token Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 max-w-2xl w-full mx-4 shadow-xl">
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center w-full">
-                Deploy token on {currentNetwork?.name}
-              </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 absolute right-8"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 font-inter">
-                    Token Name
-                  </label>
-                  <input
-                    type="text"
-                    name="tokenName"
-                    value={formData.tokenName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
-                    placeholder="e.g., MyToken"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 font-inter">
-                    Token Symbol
-                  </label>
-                  <input
-                    type="text"
-                    name="tokenSymbol"
-                    value={formData.tokenSymbol}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
-                    placeholder="e.g., MTK"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 font-inter">
-                    Decimals
-                  </label>
-                  <input
-                    type="number"
-                    name="decimals"
-                    value={formData.decimals}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
-                    placeholder="e.g., 18"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 font-inter">
-                    Total Supply
-                  </label>
-                  <input
-                    type="number"
-                    name="totalSupply"
-                    value={formData.totalSupply}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
-                    placeholder="e.g., 1000000"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between pt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 font-inter"
-                >
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
-                >
-                  Register & Deploy
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <DeployTokenModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+        formData={formData}
+        onInputChange={handleInputChange}
+        currentNetwork={currentNetwork}
+      />
     </div>
   );
 }

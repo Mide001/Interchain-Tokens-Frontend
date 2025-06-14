@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { useTruncateAddress } from "@/hooks/useTruncateAddress";
 import { NetworkSwitcher } from "@/components/NetworkSwitcher";
 import { WalletDetails } from "@/components/WalletDetails";
 import { SettingsDropdown } from "@/components/SettingsDropdown";
