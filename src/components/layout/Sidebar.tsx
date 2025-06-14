@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { HiHome, HiPlusCircle, HiCurrencyDollar, HiQuestionMarkCircle, HiBookOpen } from "react-icons/hi2";
 
 interface NavItem {
   name: string;
   href: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 interface UserProfile {
@@ -21,11 +22,11 @@ interface SidebarProps {
 }
 
 const navigation: NavItem[] = [
-  { name: "Home", href: "/", icon: "🏠" },
-  { name: "Launch a Token", href: "/launch", icon: "🚀" },
-  { name: "My Tokens", href: "/my-tokens", icon: "💎" },
-  { name: "How it Works", href: "/how-it-works", icon: "❓" },
-  { name: "Docs", href: "/docs", icon: "📚" },
+  { name: "Home", href: "/", icon: <HiHome className="w-5 h-5" /> },
+  { name: "Launch a Token", href: "/launch", icon: <HiPlusCircle className="w-5 h-5" /> },
+  { name: "My Tokens", href: "/my-tokens", icon: <HiCurrencyDollar className="w-5 h-5" /> },
+  { name: "How it Works", href: "/how-it-works", icon: <HiQuestionMarkCircle className="w-5 h-5" /> },
+  { name: "Docs", href: "/docs", icon: <HiBookOpen className="w-5 h-5" /> },
 ];
 
 export default function Sidebar({ userProfile }: SidebarProps) {
@@ -65,14 +66,14 @@ export default function Sidebar({ userProfile }: SidebarProps) {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center px-4 py-4 text-sm font-medium rounded-xl transition-colors duration-200 ${
+                    className={`group flex items-center px-4 py-4 text-sm font-medium rounded-xl transition-all duration-200 ${
                       isActive
-                        ? "bg-blue-50 text-blue-700"
+                        ? "bg-white text-blue-600 border-2 border-blue-500 scale-105 font-semibold"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                   >
-                    <span className="mr-4 text-lg">{item.icon}</span>
-                    <span className="text-base font-inter">{item.name}</span>
+                    <span className="mr-4">{item.icon}</span>
+                    <span className={`text-base font-inter ${isActive ? 'font-semibold' : ''}`}>{item.name}</span>
                   </Link>
                 );
               })}
