@@ -9,8 +9,7 @@ import { SettingsDropdown } from "@/components/SettingsDropdown";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { authenticated, login, user } = usePrivy();
-  const { truncateAddress } = useTruncateAddress();
+  const { authenticated, login } = usePrivy();
 
   return (
     <nav className="bg-white border-b border-gray-200">

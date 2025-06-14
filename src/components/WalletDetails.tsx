@@ -1,26 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion, Transition } from "framer-motion";
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useNetwork } from "@/hooks/useNetwork";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
 import Image from "next/image";
 import { PiCheck } from "react-icons/pi";
-import { Copy01Icon, Wallet01Icon, ArrowRight03Icon, ArrowDown01Icon } from "hugeicons-react";
+import { Copy01Icon, Wallet01Icon, ArrowRight03Icon, ArrowDown01Icon, ArrowUpRight01Icon, CircleIcon, LockIcon, Coins01Icon } from "hugeicons-react";
+import { formatEther } from "viem";
+import { TransferModal } from "./TransferModal";
 
 const sidebarAnimation = {
   initial: { x: "100%" },
   animate: { x: 0 },
   exit: { x: "100%" },
   transition: { type: "spring" as const, damping: 20, stiffness: 300 }
-};
-
-const fadeInOut = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-  transition: { duration: 0.2 }
 };
 
 const formatCurrency = (amount: number, currency: string = "USD", locale: string = "en-US") => {
@@ -40,11 +36,47 @@ const shortenAddress = (address: string, chars: number = 4) => {
 export const WalletDetails = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
+  const [balance, setBalance] = useState<string>("0");
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'balances' | 'transactions'>('balances');
   const { user } = usePrivy();
+  const { wallets } = useWallets();
   const { currentNetwork } = useNetwork();
+  const { price, isLoading: isPriceLoading } = useTokenPrice();
+  const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
-  // Mock balance - replace with actual balance fetching logic
-  const balance = 1234.56;
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (!embeddedWallet || !user?.linkedAccounts) return;
+
+      try {
+        setIsLoading(true);
+        const provider = await embeddedWallet.getEthereumProvider();
+        const address = user.linkedAccounts.find(account => account.type === "wallet")?.address;
+        
+        if (!address) return;
+
+        const balance = await provider.request({
+          method: 'eth_getBalance',
+          params: [address, 'latest']
+        });
+
+        setBalance(formatEther(BigInt(balance as string)));
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+        setBalance("0");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBalance();
+    // Set up an interval to refresh the balance every 30 seconds
+    const interval = setInterval(fetchBalance, 30000);
+
+    return () => clearInterval(interval);
+  }, [embeddedWallet, user?.linkedAccounts]);
 
   const handleSidebarClose = () => {
     setIsSidebarOpen(false);
@@ -61,7 +93,22 @@ export const WalletDetails = () => {
 
   const getNetworkLogoPath = () => {
     if (!currentNetwork?.name) return "/assets/logo/eth-logo.svg";
-    return `/assets/logo/${currentNetwork.name.toLowerCase().replace(" ", "-")}-logo.svg`;
+    
+    const networkName = currentNetwork.name.toLowerCase();
+    switch (networkName) {
+      case "base":
+        return "/assets/logo/base-logo.svg";
+      case "optimism":
+        return "/assets/logo/op-logo.svg";
+      case "ethereum":
+      default:
+        return "/assets/logo/eth-logo.svg";
+    }
+  };
+
+  const getUsdValue = (ethAmount: string) => {
+    const ethValue = parseFloat(ethAmount);
+    return formatCurrency(ethValue * price);
   };
 
   return (
@@ -76,7 +123,11 @@ export const WalletDetails = () => {
         <Wallet01Icon className="size-5 text-gray-900" />
         <div className="h-9 w-px border-r border-dashed border-gray-200" />
         <div className="flex items-center gap-1.5">
-          <p className="text-gray-900 font-semibold">{formatCurrency(balance)}</p>
+          <p className={`text-gray-900 font-semibold transition-all duration-200 ${
+            isLoading || isPriceLoading ? 'blur-sm opacity-50' : 'blur-0 opacity-100'
+          }`}>
+            {getUsdValue(balance)}
+          </p>
           <ArrowDown01Icon
             aria-label="Caret down"
             className={`mx-1 size-4 text-gray-500 transition-transform duration-300 ${
@@ -152,39 +203,107 @@ export const WalletDetails = () => {
                       </button>
                     </div>
 
-                    <div className="text-2xl font-medium text-gray-900">
-                      {formatCurrency(balance)}
+                    <div className={`text-2xl font-medium text-gray-900 transition-all duration-200 ${
+                      isLoading || isPriceLoading ? 'blur-sm opacity-50' : 'blur-0 opacity-100'
+                    }`}>
+                      {getUsdValue(balance)}
                     </div>
 
-                    {/* Balance details */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <Image
-                            src="/assets/logo/eth-logo.svg"
-                            alt="ETH"
-                            width={32}
-                            height={32}
-                            className="size-8 rounded-full"
-                          />
-                          <Image
-                            src={getNetworkLogoPath()}
-                            alt={currentNetwork?.name || "Network"}
-                            width={16}
-                            height={16}
-                            className="absolute -bottom-1 -right-1 size-4 rounded-full"
-                          />
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsTransferModalOpen(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                      >
+                        <ArrowUpRight01Icon className="size-5" />
+                        <span>Transfer</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                      >
+                        <CircleIcon className="size-5" />
+                        <span>Fund</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="mt-6">
+                    <div className="flex border-b border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('balances')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors duration-200 ${
+                          activeTab === 'balances'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <span>Balances</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('transactions')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors duration-200 ${
+                          activeTab === 'transactions'
+                            ? 'text-blue-600 border-b-2 border-blue-600'
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <span>Transactions</span>
+                      </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="mt-4">
+                      {activeTab === 'balances' ? (
+                        <div className="space-y-4">
+                          {/* ETH Balance Card */}
+                          <div className="rounded-lg border border-gray-200 p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="relative">
+                                  <Image
+                                    src="/assets/logo/eth-logo.svg"
+                                    alt="ETH"
+                                    width={32}
+                                    height={32}
+                                    className="size-8 rounded-full"
+                                  />
+                                  <Image
+                                    src={getNetworkLogoPath()}
+                                    alt={currentNetwork?.name || "Network"}
+                                    width={16}
+                                    height={16}
+                                    className="absolute -bottom-1 -right-1 size-4 rounded-full"
+                                  />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-gray-900">ETH</span>
+                                  <span className={`text-gray-500 transition-all duration-200 ${
+                                    isLoading ? 'blur-sm opacity-50' : 'blur-0 opacity-100'
+                                  }`}>
+                                    {`${parseFloat(balance).toFixed(4)} ETH`}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <span className={`text-gray-900 transition-all duration-200 ${
+                                  isLoading || isPriceLoading ? 'blur-sm opacity-50' : 'blur-0 opacity-100'
+                                }`}>
+                                  {getUsdValue(balance)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="text-gray-900">ETH</span>
-                          <span className="text-gray-500">0.5 ETH</span>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-gray-500 text-sm">No transactions found</p>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-gray-900">
-                          {formatCurrency(balance)}
-                        </span>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -193,6 +312,12 @@ export const WalletDetails = () => {
           </Dialog>
         )}
       </AnimatePresence>
+
+      <TransferModal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        balance={balance}
+      />
     </>
   );
 }; 
