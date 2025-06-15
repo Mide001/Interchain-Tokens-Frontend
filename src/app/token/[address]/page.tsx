@@ -8,6 +8,7 @@ import Link from "next/link";
 import { PiCheck } from "react-icons/pi";
 import { Copy01Icon, ArrowUpRight01Icon } from "hugeicons-react";
 import Image from "next/image";
+import RegisterTokenModal from "@/components/RegisterTokenModal";
 
 interface TokenInfo {
   name: string;
@@ -57,6 +58,7 @@ export default function TokenPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const truncateAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -115,6 +117,13 @@ export default function TokenPage() {
 
     fetchTokenInfo();
   }, [params.address, currentNetwork]);
+
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement token registration logic
+    console.log("Registering token:", params.address);
+    setIsRegisterModalOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -219,11 +228,36 @@ export default function TokenPage() {
 
         {/* Register Button */}
         <div className="flex justify-center pt-8">
-          <button className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md">
+          <button 
+            onClick={() => setIsRegisterModalOpen(true)}
+            className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
             Register Token Multichain
           </button>
         </div>
       </div>
+
+      {/* Register Token Modal */}
+      <RegisterTokenModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSubmit={handleRegisterSubmit}
+        tokenAddress={params.address as `0x${string}`}
+        currentNetwork={currentNetwork}
+      />
     </div>
   );
 }
+
+const getNetworkLogo = (networkName: string) => {
+  switch (networkName.toLowerCase()) {
+    case "base sepolia":
+      return "/assets/logo/base-logo.svg";
+    case "optimism sepolia":
+      return "/assets/logo/op-logo.svg";
+    case "sepolia":
+      return "/assets/logo/eth-logo.svg";
+    default:
+      return "/assets/logo/eth-logo.svg";
+  }
+};
