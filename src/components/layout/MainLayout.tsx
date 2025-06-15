@@ -25,13 +25,12 @@ export default function MainLayout({
     : undefined;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar userProfile={userProfile} />
-
-      <div className="flex-1">
+      
+      <div className="lg:pl-[280px]">
         <Navbar />
-
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-gray-50">{children}</main>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );
