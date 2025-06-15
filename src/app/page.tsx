@@ -116,9 +116,11 @@ export default function Home() {
 
             {/* Right Column - Image */}
             <div className="flex justify-center">
-              <img
+              <Image
                 src="/hero-image.png"
                 alt="Token Launch Illustration"
+                width={500}
+                height={500}
                 className="max-w-full h-auto rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300"
               />
             </div>

@@ -16,7 +16,8 @@ interface Token {
     logoUrl?: string;
     marketCap?: number;
     volume24h?: number;
-}
+    address?: string;
+    }
 
 // Dummy data for demonstration
 const dummyTokens: Token[] = [
@@ -30,6 +31,8 @@ const dummyTokens: Token[] = [
         network: "Ethereum",
         marketCap: 234567890,
         volume24h: 12345678,
+        logoUrl: "/assets/logo/eth.svg",
+        address: "0x0000000000000000000000000000000000000000",
     },
     {
         id: "2",
@@ -41,6 +44,8 @@ const dummyTokens: Token[] = [
         network: "Optimism",
         marketCap: 1234567,
         volume24h: 234567,
+        logoUrl: "/assets/logo/bft.svg",
+        address: "0x0000000000000000000000000000000000000000",
     },
     {
         id: "3",
@@ -52,6 +57,8 @@ const dummyTokens: Token[] = [
         network: "Ethereum",
         marketCap: 34567890,
         volume24h: 2345678,
+        logoUrl: "/assets/logo/usdc.svg",
+        address: "0x0000000000000000000000000000000000000000",
     },
 ];
 
