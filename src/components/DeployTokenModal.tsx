@@ -1,6 +1,18 @@
 import React, { useState } from "react";
 import { useNetwork } from "@/hooks/useNetwork";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
+import { estimateNewTokenDeploymentGas } from "interchain-token-sdk";
+import { toast } from "sonner";
+import { createPublicClient, http, formatEther } from "viem";
+
+interface Network {
+  name: string;
+  id: number;
+  rpcUrl: string;
+}
 
 interface DeployTokenModalProps {
   isOpen: boolean;
@@ -13,7 +25,7 @@ interface DeployTokenModalProps {
     totalSupply: string;
   };
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  currentNetwork: { name: string; id: number } | null;
+  currentNetwork: Network | null;
 }
 
 type Step = "details" | "deploy" | "review";
@@ -31,22 +43,35 @@ const StepIndicator = ({ currentStep }: { currentStep: Step }) => {
       <div className="absolute top-[1.25rem] left-[1.25rem] right-[1.25rem] h-0.5 bg-gray-200"></div>
       {steps.map((step, index) => {
         const isActive = step.id === currentStep;
-        const isCompleted = steps.findIndex(s => s.id === currentStep) > steps.findIndex(s => s.id === step.id);
-        
+        const isCompleted =
+          steps.findIndex((s) => s.id === currentStep) >
+          steps.findIndex((s) => s.id === step.id);
+
         return (
-          <div key={step.id} className="relative z-10 flex flex-col items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
-              isActive ? "bg-blue-600 text-white" : 
-              isCompleted ? "bg-green-500 text-white" : 
-              "bg-gray-200 text-gray-600"
-            }`}>
+          <div
+            key={step.id}
+            className="relative z-10 flex flex-col items-center"
+          >
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : isCompleted
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-200 text-gray-600"
+              }`}
+            >
               {isCompleted ? "✓" : index + 1}
             </div>
-            <span className={`text-sm font-medium ${
-              isActive ? "text-blue-600" : 
-              isCompleted ? "text-green-500" : 
-              "text-gray-500"
-            }`}>
+            <span
+              className={`text-sm font-medium ${
+                isActive
+                  ? "text-blue-600"
+                  : isCompleted
+                  ? "text-green-500"
+                  : "text-gray-500"
+              }`}
+            >
               {step.label}
             </span>
           </div>
@@ -54,6 +79,34 @@ const StepIndicator = ({ currentStep }: { currentStep: Step }) => {
       })}
     </div>
   );
+};
+
+const mapChainNameToSDKFormat = (chainName: string): string => {
+  switch (chainName.toLowerCase()) {
+    case "base sepolia":
+      return "base-sepolia";
+    case "optimism sepolia":
+      return "optimism-sepolia";
+    case "sepolia":
+      return "ethereum-sepolia";
+    default:
+      throw new Error(`Unsupported chain: ${chainName}`);
+  }
+};
+
+const formatEthValue = (value: number): string => {
+  if (value === 0) return '0';
+  
+  // Convert to scientific notation to find the first non-zero digit
+  const scientific = value.toExponential();
+  const [coefficient, exponent] = scientific.split('e');
+  const exp = parseInt(exponent);
+  
+  // Calculate how many decimal places we need
+  const decimalPlaces = Math.max(0, -exp + 1);
+  
+  // Format with exactly 2 significant digits after the first non-zero
+  return value.toFixed(decimalPlaces + 1);
 };
 
 export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
@@ -66,20 +119,77 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<Step>("details");
   const [selectedChains, setSelectedChains] = useState<number[]>([]);
+  const [isEstimatingGas, setIsEstimatingGas] = useState<boolean>(false);
+  const [gasEstimates, setGasEstimates] = useState<Record<number, bigint>>({});
+  const { price: ethPrice, isLoading: isPriceLoading } = useTokenPrice();
+  const { balance, isLoading: isBalanceLoading } = useWalletBalance();
+  const { user } = usePrivy();
   const { supportedNetworks } = useNetwork();
+
+  // Calculate total gas cost in ETH and USD
+  const totalGasInEth = Object.values(gasEstimates).reduce((sum, gas) => sum + Number(gas) / 1e18, 0);
+  const totalGasInUsd = totalGasInEth * ethPrice;
+
+  // Check if user has sufficient balance
+  const hasSufficientBalance = Number(balance) >= totalGasInEth;
 
   if (!isOpen) return null;
 
   const availableNetworks = supportedNetworks.filter(
-    network => network.id !== currentNetwork?.id
+    (network) => network.id !== currentNetwork?.id
   );
 
-  const handleChainSelection = (chainId: number) => {
-    setSelectedChains(prev => 
-      prev.includes(chainId)
-        ? prev.filter(id => id !== chainId)
-        : [...prev, chainId]
-    );
+  const handleChainSelection = async (chainId: number) => {
+    const isCurrentlySelected = selectedChains.includes(chainId);
+    const newSelectedChains = isCurrentlySelected
+      ? selectedChains.filter((id) => id !== chainId)
+      : [...selectedChains, chainId];
+
+    setSelectedChains(newSelectedChains);
+
+    // If we're deselecting a chain, remove its gas estimate
+    if (isCurrentlySelected) {
+      setGasEstimates((prev) => {
+        const newEstimates = { ...prev };
+        delete newEstimates[chainId];
+        return newEstimates;
+      });
+      return; // Exit early since we don't need to estimate gas for deselection
+    }
+
+    // If we're adding a chain, estimate gas
+    const network = supportedNetworks.find((n) => n.id === chainId);
+    if (!network || !currentNetwork) return;
+
+    try {
+      setIsEstimatingGas(true);
+      const gasEstimate = await estimateNewTokenDeploymentGas(
+        mapChainNameToSDKFormat(currentNetwork.name),
+        mapChainNameToSDKFormat(network.name)
+      );
+      
+      setGasEstimates((prev) => ({
+        ...prev,
+        [chainId]: gasEstimate,
+      }));
+
+      // Show toast with gas estimate
+      const gasInEth = Number(gasEstimate) / 1e18;
+      toast.success(`Estimated gas for ${network.name}: ${formatEthValue(gasInEth)} ETH`);
+    } catch (error) {
+      console.error("Error estimating gas:", error);
+      toast.error(`Failed to estimate gas for ${network.name}`);
+      // Remove the chain from selection if gas estimation fails
+      setSelectedChains(prev => prev.filter(id => id !== chainId));
+      // Also remove any existing gas estimate for this chain
+      setGasEstimates(prev => {
+        const newEstimates = { ...prev };
+        delete newEstimates[chainId];
+        return newEstimates;
+      });
+    } finally {
+      setIsEstimatingGas(false);
+    }
   };
 
   const handleNext = () => {
@@ -178,32 +288,75 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
         return (
           <div className="space-y-6">
             <div className="bg-gray-50 p-4 rounded-xl">
-              <h3 className="text-sm font-medium text-gray-900 mb-4">Select additional networks to deploy to:</h3>
-              <div className="space-y-3">
-                {availableNetworks.map((network) => (
-                  <label
-                    key={network.id}
-                    className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-blue-300 transition-colors duration-200"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedChains.includes(network.id)}
-                      onChange={() => handleChainSelection(network.id)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <div className="flex items-center space-x-2">
-                      <Image
-                        src={getNetworkLogo(network.name)}
-                        alt={network.name}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium text-gray-900">{network.name}</span>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Select additional networks to deploy to
+                </h3>
+                {selectedChains.length > 0 && (
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-gray-900">
+                      {isPriceLoading ? "Loading..." : `$${totalGasInUsd.toFixed(2)}`}
                     </div>
-                  </label>
-                ))}
+                  </div>
+                )}
               </div>
+              <div className="space-y-3">
+                {availableNetworks.map((network) => {
+                  const isSelected = selectedChains.includes(network.id);
+                  const gasEstimate = gasEstimates[network.id];
+                  const isEstimating = isEstimatingGas && isSelected;
+
+                  return (
+                    <label
+                      key={network.id}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleChainSelection(network.id)}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          disabled={isEstimatingGas}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <Image
+                            src={getNetworkLogo(network.name)}
+                            alt={network.name}
+                            width={20}
+                            height={20}
+                            className="w-5 h-5"
+                          />
+                          <span className="text-sm font-medium text-gray-900">
+                            {network.name}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        {isEstimating ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                        ) : isSelected && gasEstimate ? (
+                          <span className="text-sm text-gray-500 ml-2">
+                            {formatEthValue(Number(gasEstimate) / 1e18)} ETH
+                          </span>
+                        ) : null}
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+              {selectedChains.length > 0 && (
+                <div className="mt-4 text-right">
+                  <div className="text-sm text-gray-500">
+                    Balance: {isBalanceLoading || isPriceLoading ? "Loading..." : `$${(Number(balance) * ethPrice).toFixed(2)}`}
+                    {!hasSufficientBalance && (
+                      <span className="text-red-500 ml-2">
+                        (Insufficient balance)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -211,28 +364,40 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
         return (
           <div className="space-y-6">
             <div className="bg-gray-50 p-6 rounded-xl space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Token Details</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Token Details
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Token Name</p>
-                  <p className="font-medium text-gray-900">{formData.tokenName}</p>
+                  <p className="font-medium text-gray-900">
+                    {formData.tokenName}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Token Symbol</p>
-                  <p className="font-medium text-gray-900">{formData.tokenSymbol}</p>
+                  <p className="font-medium text-gray-900">
+                    {formData.tokenSymbol}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Decimals</p>
-                  <p className="font-medium text-gray-900">{formData.decimals}</p>
+                  <p className="font-medium text-gray-900">
+                    {formData.decimals}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Supply</p>
-                  <p className="font-medium text-gray-900">{formData.totalSupply}</p>
+                  <p className="font-medium text-gray-900">
+                    {formData.totalSupply}
+                  </p>
                 </div>
               </div>
             </div>
             <div className="bg-gray-50 p-6 rounded-xl space-y-4">
-              <h3 className="text-lg font-medium text-gray-900">Deployment Networks</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Deployment Networks
+              </h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-gray-200">
                   <Image
@@ -242,13 +407,20 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                     height={20}
                     className="w-5 h-5"
                   />
-                  <span className="text-sm font-medium text-gray-900">{currentNetwork?.name} (Primary)</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {currentNetwork?.name} (Primary)
+                  </span>
                 </div>
                 {selectedChains.map((chainId) => {
-                  const network = supportedNetworks.find(n => n.id === chainId);
+                  const network = supportedNetworks.find(
+                    (n) => n.id === chainId
+                  );
                   if (!network) return null;
                   return (
-                    <div key={chainId} className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-gray-200">
+                    <div
+                      key={chainId}
+                      className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-gray-200"
+                    >
                       <Image
                         src={getNetworkLogo(network.name)}
                         alt={network.name}
@@ -256,7 +428,9 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                         height={20}
                         className="w-5 h-5"
                       />
-                      <span className="text-sm font-medium text-gray-900">{network.name}</span>
+                      <span className="text-sm font-medium text-gray-900">
+                        {network.name}
+                      </span>
                     </div>
                   );
                 })}
@@ -286,7 +460,7 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
 
         <form onSubmit={onSubmit} className="space-y-6">
           {renderStepContent()}
-          
+
           <div className="flex justify-between pt-6">
             {currentStep !== "details" ? (
               <button
@@ -305,19 +479,31 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 Cancel
               </button>
             )}
-            
+
             {currentStep !== "review" ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
-              >
-                Next
-              </button>
+              <div className="flex flex-col items-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={currentStep === "deploy" && !hasSufficientBalance}
+                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 font-inter shadow-sm hover:shadow-md ${
+                    currentStep === "deploy" && !hasSufficientBalance
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
             ) : (
               <button
                 type="submit"
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
+                disabled={!hasSufficientBalance}
+                className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 font-inter shadow-sm hover:shadow-md ${
+                  !hasSufficientBalance
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                }`}
               >
                 Deploy Token
               </button>

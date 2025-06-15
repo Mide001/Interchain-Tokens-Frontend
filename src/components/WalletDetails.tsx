@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion, Transition } from "framer-motion";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import Image from "next/image";
 import { PiCheck } from "react-icons/pi";
 import { Copy01Icon, Wallet01Icon, ArrowRight03Icon, ArrowDown01Icon, ArrowUpRight01Icon, CircleIcon, LockIcon, Coins01Icon } from "hugeicons-react";
@@ -36,47 +37,14 @@ const shortenAddress = (address: string, chars: number = 4) => {
 export const WalletDetails = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddressCopied, setIsAddressCopied] = useState(false);
-  const [balance, setBalance] = useState<string>("0");
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'balances' | 'transactions'>('balances');
   const { user } = usePrivy();
   const { wallets } = useWallets();
   const { currentNetwork } = useNetwork();
   const { price, isLoading: isPriceLoading } = useTokenPrice();
+  const { balance, isLoading } = useWalletBalance();
   const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!embeddedWallet || !user?.linkedAccounts) return;
-
-      try {
-        setIsLoading(true);
-        const provider = await embeddedWallet.getEthereumProvider();
-        const address = user.linkedAccounts.find(account => account.type === "wallet")?.address;
-        
-        if (!address) return;
-
-        const balance = await provider.request({
-          method: 'eth_getBalance',
-          params: [address, 'latest']
-        });
-
-        setBalance(formatEther(BigInt(balance as string)));
-      } catch (error) {
-        console.error('Error fetching balance:', error);
-        setBalance("0");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBalance();
-    // Set up an interval to refresh the balance every 30 seconds
-    const interval = setInterval(fetchBalance, 30000);
-
-    return () => clearInterval(interval);
-  }, [embeddedWallet, user?.linkedAccounts]);
 
   const handleSidebarClose = () => {
     setIsSidebarOpen(false);
