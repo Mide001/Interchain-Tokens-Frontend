@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useRouter } from "next/navigation";
 import { isAddress } from "viem";
 import DeployTokenModal from "@/components/DeployTokenModal";
-import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 
 export default function LaunchPage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { currentNetwork, supportedNetworks } = useNetwork();
   const [isLoading, setIsLoading] = useState(false);
@@ -21,16 +19,6 @@ export default function LaunchPage() {
     decimals: "18",
     totalSupply: "",
   });
-
-  // Handle client-side mounting
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Show loading skeleton until mounted
-  if (!mounted) {
-    return <LoadingSkeleton />;
-  }
 
   const getNetworkLogo = (networkName: string) => {
     switch (networkName.toLowerCase()) {
@@ -98,15 +86,14 @@ export default function LaunchPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)]">
+    <div className="max-w-4xl mx-auto space-y-8 p-6">
       {/* Search Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 font-plus-jakarta text-center">
+      <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="flex flex-col gap-8">
+          <h1 className="text-xl font-semibold text-gray-900 font-plus-jakarta text-center">
             Deploy your multichain token
           </h1>
 
-          {/* Token Address Search */}
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <input
@@ -145,27 +132,7 @@ export default function LaunchPage() {
             </div>
           </div>
 
-          {/* Mobile Search Layout */}
-          <div className="block sm:hidden space-y-4">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md text-lg"
-            >
-              Deploy New Token
-            </button>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-100"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-4 bg-white text-sm text-gray-400 font-medium font-inter">OR</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop OR Separator */}
-          <div className="hidden sm:block relative">
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-100"></div>
             </div>
@@ -174,10 +141,9 @@ export default function LaunchPage() {
             </div>
           </div>
 
-          {/* Deploy Token Button */}
           <button
             onClick={() => setIsModalOpen(true)}
-            className="hidden sm:block w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md text-lg"
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-inter shadow-sm hover:shadow-md"
           >
             Deploy New Token
           </button>
@@ -188,9 +154,9 @@ export default function LaunchPage() {
       <DeployTokenModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
         formData={formData}
         onInputChange={handleInputChange}
-        onSubmit={handleSubmit}
         currentNetwork={currentNetwork}
       />
     </div>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import ClientProviders from "../providers/ClientProviders";
+import Providers from "@/providers/PrivyProvider";
+import MainLayout from "@/components/layout/MainLayout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,14 +21,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${plusJakarta.variable} font-sans antialiased`}>
-        <ClientProviders>{children}</ClientProviders>
+      <body
+        className={`${inter.variable} ${plusJakarta.variable} font-sans antialiased`}
+      >
+        <Providers>
+          {" "}
+          <MainLayout>{children}</MainLayout>
+        </Providers>
       </body>
     </html>
-  )
+  );
 }

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, Transition } from "framer-motion";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import Image from "next/image";
 import { PiCheck } from "react-icons/pi";
-import { Copy01Icon, Wallet01Icon, ArrowRight03Icon, ArrowDown01Icon, ArrowUpRight01Icon, CircleIcon } from "hugeicons-react";
+import { Copy01Icon, Wallet01Icon, ArrowRight03Icon, ArrowDown01Icon, ArrowUpRight01Icon, CircleIcon, LockIcon, Coins01Icon } from "hugeicons-react";
 import { formatEther } from "viem";
 import { TransferModal } from "./TransferModal";
 

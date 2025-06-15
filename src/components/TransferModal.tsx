@@ -41,8 +41,8 @@ export const TransferModal = ({
   const [transferAmount, setTransferAmount] = useState("");
   const { user } = usePrivy();
   const { wallets } = useWallets();
-  useNetwork();
-  useTokenPrice();
+  const { currentNetwork } = useNetwork();
+  const { price } = useTokenPrice();
   const embeddedWallet = wallets.find(
     (wallet) => wallet.walletClientType === "privy"
   );
@@ -101,14 +101,14 @@ export const TransferModal = ({
       toast.success(`${data.amount} ETH successfully transferred`);
       setIsConfirming(false);
       reset();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error("Transfer failed:", error);
       let errorMessage = "Transfer failed";
 
-      if (error instanceof Error) {
+      if (error?.message) {
         errorMessage = error.message;
-      } else if (typeof error === "object" && error !== null && "error" in error && typeof error.error === "object" && error.error !== null && "message" in error.error) {
-        errorMessage = String((error.error as { message: unknown }).message);
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
       } else if (typeof error === "string") {
         errorMessage = error;
       }

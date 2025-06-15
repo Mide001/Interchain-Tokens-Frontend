@@ -41,6 +41,19 @@ export const useNetwork = () => {
   const { wallets } = useWallets();
   const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
 
+  const getChainId = async () => {
+    if (!embeddedWallet) return null;
+    
+    try {
+      const provider = await embeddedWallet.getEthereumProvider();
+      const chainId = await provider.request({ method: 'eth_chainId' });
+      return chainId;
+    } catch (error) {
+      console.error('Error getting chain ID:', error);
+      return null;
+    }
+  };
+
   const switchNetwork = async (network: Network) => {
     if (!embeddedWallet) {
       toast.error('Wallet not connected');
@@ -57,9 +70,9 @@ export const useNetwork = () => {
       
       setCurrentNetwork(network);
       toast.success(`Switched to ${network.name}`);
-    } catch (switchError: unknown) {
+    } catch (switchError: any) {
       // This error code indicates that the chain has not been added to MetaMask
-      if (typeof switchError === 'object' && switchError !== null && 'code' in switchError && switchError.code === 4902) {
+      if (switchError.code === 4902) {
         try {
           const provider = await embeddedWallet.getEthereumProvider();
           await provider.request({
@@ -97,19 +110,6 @@ export const useNetwork = () => {
     const initNetwork = async () => {
       if (!embeddedWallet || !ready) return;
       
-      const getChainId = async () => {
-        if (!embeddedWallet) return null;
-        
-        try {
-          const provider = await embeddedWallet.getEthereumProvider();
-          const chainId = await provider.request({ method: 'eth_chainId' });
-          return chainId;
-        } catch (error) {
-          console.error('Error getting chain ID:', error);
-          return null;
-        }
-      };
-      
       try {
         const chainId = await getChainId();
         if (chainId && mounted) {
@@ -127,31 +127,25 @@ export const useNetwork = () => {
       initNetwork();
 
       // Listen for chain changes
-      const handleChainChanged = (chainId: unknown) => {
+      const handleChainChanged = (chainId: string) => {
         if (!mounted) return;
-        if (typeof chainId === 'string') {
-          const network = SUPPORTED_NETWORKS.find(n => n.chainId === chainId);
-          if (network) {
-            setCurrentNetwork(network);
-          }
+        const network = SUPPORTED_NETWORKS.find(n => n.chainId === chainId);
+        if (network) {
+          setCurrentNetwork(network);
         }
       };
 
       const setupChainChangeListener = async () => {
         const provider = await embeddedWallet.getEthereumProvider();
-        provider.on('chainChanged', handleChainChanged);
+        provider.on('chainChanged', handleChainChanged as any);
         return () => {
           mounted = false;
-          provider.removeListener('chainChanged', handleChainChanged);
+          provider.removeListener('chainChanged', handleChainChanged as any);
         };
       };
 
       setupChainChangeListener();
     }
-
-    return () => {
-      mounted = false;
-    };
   }, [embeddedWallet, ready]);
 
   return {
