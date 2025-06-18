@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 const networks = ["Base", "Ethereum", "Optimism"];
 
@@ -84,116 +85,116 @@ const tokens = [
 
 export default function Home() {
   return (
-    <div className="space-y-4">
+    <div className="max-w-4xl mx-auto space-y-8 p-6">
       {/* Hero Section */}
-      <section className="py-24 rounded-lg">
-        <div
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#1d4ed8] rounded-lg"
-          style={{
-            backgroundImage: `linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px)`,
-            backgroundSize: "80px 80px",
-          }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="py-12">
-              <div className="space-y-16">
-                <h1 className="text-4xl md:text-5xl font-medium font-plus-jakarta">
-                  Launch a token on the <NetworkAnimation /> chain
-                </h1>
-                <div className="flex flex-row gap-4">
-                  <button className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-blue-100 transition-colors duration-200 font-inter">
-                    Create a Token
-                  </button>
-                  <button className="px-6 py-3 border border-white text-white rounded-lg font-medium hover:bg-white hover:text-[#2563eb] transition-colors duration-200 font-inter">
-                    Explore Tokens
-                  </button>
-                </div>
-              </div>
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(#2563eb 1px, transparent 1px), linear-gradient(90deg, #2563eb 1px, transparent 1px)`,
+          backgroundSize: "80px 80px",
+          backgroundColor: "#1d4ed8",
+        }}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-8">
+          <div className="space-y-8">
+            <h1 className="text-3xl md:text-4xl font-medium font-plus-jakarta text-white">
+              Launch a token on the <NetworkAnimation /> chain
+            </h1>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/launch">
+                <button className="px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-blue-100 transition-colors duration-200 font-inter">
+                  Create a Token
+                </button>
+              </Link>
+              <button className="px-6 py-3 border border-white text-white rounded-lg font-medium hover:bg-white hover:text-[#2563eb] transition-colors duration-200 font-inter">
+                Explore Tokens
+              </button>
             </div>
+          </div>
 
-            {/* Right Column - Image */}
-            <div className="flex justify-center">
-              <img
+          {/* Right Column - Image */}
+          <div className="flex justify-center">
+            <div className="relative w-full max-w-md h-64">
+              <Image
                 src="/hero-image.png"
                 alt="Token Launch Illustration"
-                className="max-w-full h-auto rounded-lg shadow-lg"
+                fill
+                className="object-contain rounded-lg"
               />
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Token Showcase Section */}
-      <section className="py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white rounded-lg">
-          <div className="p-8">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-semibold font-plus-jakarta text-gray-900">
-                Top Tokens
-              </h2>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search tokens..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+      <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-2xl font-semibold font-plus-jakarta text-gray-900">
+              Top Tokens
+            </h2>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search tokens..."
+                className="pl-10 pr-4 py-2 border border-gray-300 bg-white text-gray-900 placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+              />
+              <svg
+                className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
-                <svg
-                  className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </div>
+              </svg>
             </div>
+          </div>
 
-            {/* Token Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {tokens.map((token, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-3xl p-6 transition-shadow duration-200"
-                >
-                  <div className="bg-white rounded-xl p-4 mb-3">
-                    <div className="flex items-center space-x-4">
-                      <Image
-                        src={token.image}
-                        alt={`${token.name} logo`}
-                        width={48}
-                        height={48}
-                        className="rounded-full"
-                      />
-                      <div className="flex-1">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-semibold font-plus-jakarta text-gray-900">
-                            {token.name}
-                          </h3>
-                          <p className="text-base text-gray-700 font-inter">
-                            {token.symbol}
-                          </p>
-                          <span className="text-sm font-medium text-gray-700 font-plus-jakarta">
-                            {token.totalSupply}
-                          </span>
-                        </div>
+          {/* Token Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tokens.map((token, index) => (
+              <div
+                key={index}
+                className="bg-gray-50 rounded-xl p-6 transition-shadow duration-200 hover:shadow-md"
+              >
+                <div className="bg-white rounded-lg p-4 mb-4">
+                  <div className="flex items-center space-x-4">
+                    <Image
+                      src={token.image}
+                      alt={`${token.name} logo`}
+                      width={48}
+                      height={48}
+                      className="rounded-full"
+                    />
+                    <div className="flex-1">
+                      <div className="space-y-1">
+                        <h3 className="text-lg font-semibold font-plus-jakarta text-gray-900">
+                          {token.name}
+                        </h3>
+                        <p className="text-sm text-gray-700 font-inter">
+                          {token.symbol}
+                        </p>
+                        <span className="text-xs font-medium text-gray-700 font-plus-jakarta">
+                          {token.totalSupply}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-600 font-inter text-base">
-                    {token.description}
-                  </p>
                 </div>
-              ))}
-            </div>
+                <p className="text-gray-600 font-inter text-sm leading-relaxed">
+                  {token.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
