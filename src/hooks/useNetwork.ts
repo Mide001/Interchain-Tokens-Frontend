@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 
@@ -41,7 +41,7 @@ export const useNetwork = () => {
   const { wallets } = useWallets();
   const embeddedWallet = wallets.find(wallet => wallet.walletClientType === 'privy');
 
-  const getChainId = async () => {
+  const getChainId = useCallback(async () => {
     if (!embeddedWallet) return null;
     
     try {
@@ -52,7 +52,7 @@ export const useNetwork = () => {
       console.error('Error getting chain ID:', error);
       return null;
     }
-  };
+  }, [embeddedWallet]);
 
   const switchNetwork = async (network: Network) => {
     if (!embeddedWallet) {
@@ -70,9 +70,9 @@ export const useNetwork = () => {
       
       setCurrentNetwork(network);
       toast.success(`Switched to ${network.name}`);
-    } catch (switchError: any) {
+    } catch (switchError: unknown) {
       // This error code indicates that the chain has not been added to MetaMask
-      if (switchError.code === 4902) {
+      if (switchError && typeof switchError === 'object' && 'code' in switchError && switchError.code === 4902) {
         try {
           const provider = await embeddedWallet.getEthereumProvider();
           await provider.request({
@@ -137,16 +137,18 @@ export const useNetwork = () => {
 
       const setupChainChangeListener = async () => {
         const provider = await embeddedWallet.getEthereumProvider();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         provider.on('chainChanged', handleChainChanged as any);
         return () => {
           mounted = false;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           provider.removeListener('chainChanged', handleChainChanged as any);
         };
       };
 
       setupChainChangeListener();
     }
-  }, [embeddedWallet, ready]);
+  }, [embeddedWallet, ready, getChainId]);
 
   return {
     currentNetwork,
