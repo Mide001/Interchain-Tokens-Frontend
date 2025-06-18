@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
-import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { estimateNewTokenDeploymentGas } from "interchain-token-sdk";
 import { toast } from "sonner";
-import { createPublicClient, http, formatEther } from "viem";
 
 interface Network {
   name: string;
@@ -99,7 +97,7 @@ const formatEthValue = (value: number): string => {
   
   // Convert to scientific notation to find the first non-zero digit
   const scientific = value.toExponential();
-  const [coefficient, exponent] = scientific.split('e');
+  const [, exponent] = scientific.split('e');
   const exp = parseInt(exponent);
   
   // Calculate how many decimal places we need
@@ -123,7 +121,6 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
   const [gasEstimates, setGasEstimates] = useState<Record<number, bigint>>({});
   const { price: ethPrice, isLoading: isPriceLoading } = useTokenPrice();
   const { balance, isLoading: isBalanceLoading } = useWalletBalance();
-  const { user } = usePrivy();
   const { supportedNetworks } = useNetwork();
 
   // Calculate total gas cost in ETH and USD

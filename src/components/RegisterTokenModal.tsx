@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
-import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { estimateExistingTokenDeploymentGas } from "interchain-token-sdk";
 import { toast } from "sonner";
@@ -99,7 +98,6 @@ export const RegisterTokenModal: React.FC<RegisterTokenModalProps> = ({
   const [gasEstimates, setGasEstimates] = useState<Record<number, bigint>>({});
   const { price: ethPrice, isLoading: isPriceLoading } = useTokenPrice();
   const { balance, isLoading: isBalanceLoading } = useWalletBalance();
-  const { user } = usePrivy();
   const { supportedNetworks } = useNetwork();
 
   // Calculate total gas cost in ETH and USD
