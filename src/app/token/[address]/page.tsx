@@ -228,7 +228,7 @@ export default function TokenPage() {
 
         {/* Register Button */}
         <div className="flex justify-center pt-8">
-          <button 
+          <button
             onClick={() => setIsRegisterModalOpen(true)}
             className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md"
           >
@@ -248,16 +248,3 @@ export default function TokenPage() {
     </div>
   );
 }
-
-const getNetworkLogo = (networkName: string) => {
-  switch (networkName.toLowerCase()) {
-    case "base sepolia":
-      return "/assets/logo/base-logo.svg";
-    case "optimism sepolia":
-      return "/assets/logo/op-logo.svg";
-    case "sepolia":
-      return "/assets/logo/eth-logo.svg";
-    default:
-      return "/assets/logo/eth-logo.svg";
-  }
-};
