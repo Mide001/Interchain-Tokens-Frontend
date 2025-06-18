@@ -4,8 +4,6 @@ import { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useNetwork } from "@/hooks/useNetwork";
-import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import {
@@ -41,8 +39,6 @@ export const TransferModal = ({
   const [transferAmount, setTransferAmount] = useState("");
   const { user } = usePrivy();
   const { wallets } = useWallets();
-  const { currentNetwork } = useNetwork();
-  const { price } = useTokenPrice();
   const embeddedWallet = wallets.find(
     (wallet) => wallet.walletClientType === "privy"
   );
@@ -101,14 +97,17 @@ export const TransferModal = ({
       toast.success(`${data.amount} ETH successfully transferred`);
       setIsConfirming(false);
       reset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Transfer failed:", error);
       let errorMessage = "Transfer failed";
 
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.error?.message) {
-        errorMessage = error.error.message;
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as { message: string }).message;
+      } else if (error && typeof error === 'object' && 'error' in error) {
+        const errorObj = (error as { error: unknown }).error;
+        if (errorObj && typeof errorObj === 'object' && 'message' in errorObj) {
+          errorMessage = (errorObj as { message: string }).message;
+        }
       } else if (typeof error === "string") {
         errorMessage = error;
       }
