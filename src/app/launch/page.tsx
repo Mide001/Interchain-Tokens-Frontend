@@ -11,12 +11,12 @@ import { Search01Icon, AlertCircleIcon } from "hugeicons-react";
 // Basic ERC20 ABI for token validation
 const ERC20_ABI = [
   {
-    "constant": true,
-    "inputs": [],
-    "name": "name",
-    "outputs": [{"name": "", "type": "string"}],
-    "type": "function"
-  }
+    constant: true,
+    inputs: [],
+    name: "name",
+    outputs: [{ name: "", type: "string" }],
+    type: "function",
+  },
 ] as const;
 
 export default function LaunchPage() {
@@ -35,7 +35,7 @@ export default function LaunchPage() {
 
   const getNetworkLogo = (networkName: string) => {
     switch (networkName.toLowerCase()) {
-      case 'base sepolia':
+      case "base sepolia":
         return (
           <Image
             src="/assets/logo/base-logo.svg"
@@ -45,7 +45,7 @@ export default function LaunchPage() {
             className="w-5 h-5 rounded-full"
           />
         );
-      case 'optimism sepolia':
+      case "optimism sepolia":
         return (
           <Image
             src="/assets/logo/op-logo.svg"
@@ -55,7 +55,7 @@ export default function LaunchPage() {
             className="w-5 h-5 rounded-full"
           />
         );
-      case 'sepolia':
+      case "sepolia":
         return (
           <Image
             src="/assets/logo/eth-logo.svg"
@@ -72,9 +72,9 @@ export default function LaunchPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -96,21 +96,23 @@ export default function LaunchPage() {
       await publicClient.readContract({
         address: address as `0x${string}`,
         abi: ERC20_ABI,
-        functionName: 'name',
+        functionName: "name",
       });
 
       return true;
     } catch (error) {
-      console.error('Error validating token:', error);
+      console.error("Error validating token:", error);
       return false;
     }
   };
 
-  const handleTokenAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTokenAddressChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const address = e.target.value;
     setTokenAddress(address);
     setError(null);
-    
+
     if (isAddress(address)) {
       setIsLoading(true);
       try {
@@ -121,7 +123,7 @@ export default function LaunchPage() {
           setError("not_found");
         }
       } catch (error) {
-        console.error('Error checking token:', error);
+        console.error("Error checking token:", error);
         setError("not_found");
       } finally {
         setIsLoading(false);
@@ -147,7 +149,7 @@ export default function LaunchPage() {
                     value={tokenAddress}
                     onChange={handleTokenAddressChange}
                     className={`w-full px-4 py-3 pl-10 border ${
-                      error ? 'border-red-200' : 'border-blue-200'
+                      error ? "border-red-200" : "border-blue-200"
                     } rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300`}
                     placeholder="Search for any token address"
                   />
@@ -161,7 +163,7 @@ export default function LaunchPage() {
               </div>
               <div className="relative w-48">
                 <select
-                  value={currentNetwork?.id || ''}
+                  value={currentNetwork?.id || ""}
                   className="w-full px-4 py-3 pl-10 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold text-sm transition-all duration-200 hover:border-blue-300 appearance-none"
                   disabled
                 >
@@ -175,8 +177,18 @@ export default function LaunchPage() {
                   {currentNetwork && getNetworkLogo(currentNetwork.name)}
                 </div>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  <svg
+                    className="w-3.5 h-3.5 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
               </div>
@@ -189,10 +201,13 @@ export default function LaunchPage() {
                     <AlertCircleIcon className="size-5 text-red-500" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium text-red-900">Token Not Found</h3>
+                    <h3 className="text-sm font-medium text-red-900">
+                      Token Not Found
+                    </h3>
                     <p className="mt-1 text-sm text-red-600">
-                      The token address you entered doesn't exist on {currentNetwork?.name}. 
-                      Make sure you're on the correct network or try deploying a new token.
+                      The token address you entered doesn&apos;t exist on{" "}
+                      {currentNetwork?.name}. Make sure you&apos;re on the
+                      correct network or try deploying a new token.
                     </p>
                   </div>
                 </div>
@@ -205,7 +220,9 @@ export default function LaunchPage() {
               <div className="w-full border-t border-gray-100"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-white text-sm text-gray-400 font-medium font-inter">OR</span>
+              <span className="px-4 bg-white text-sm text-gray-400 font-medium font-inter">
+                OR
+              </span>
             </div>
           </div>
 
