@@ -16,7 +16,7 @@
     "alchemy-sdk": "^3.6.0",
     "framer-motion": "^12.18.1",
     "hugeicons-react": "^0.3.0",
-    "interchain-token-sdk": "^2.0.2",
+    "interchain-token-sdk": "^2.0.3",
     "next": "15.3.3",
     "permissionless": "^0.2.47",
     "react": "^19.0.0",
