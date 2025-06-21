@@ -395,42 +395,63 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
               <h3 className="text-lg font-medium text-gray-900">
                 Deployment Networks
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-gray-200">
-                  <Image
-                    src={getNetworkLogo(currentNetwork?.name || "")}
-                    alt={currentNetwork?.name || ""}
-                    width={20}
-                    height={20}
-                    className="w-5 h-5"
-                  />
+              <div className="flex items-center space-x-4">
+                {/* Primary network */}
+                <div className="flex items-center space-x-2">
+                  <div className="relative">
+                    <Image
+                      src={getNetworkLogo(currentNetwork?.name || "")}
+                      alt={currentNetwork?.name || ""}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+                    />
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <span className="text-xs text-white font-bold">✓</span>
+                    </div>
+                  </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {currentNetwork?.name} (Primary)
+                    {currentNetwork?.name}
                   </span>
                 </div>
-                {selectedChains.map((chainId) => {
-                  const network = supportedNetworks.find(
-                    (n) => n.id === chainId
-                  );
-                  if (!network) return null;
-                  return (
-                    <div
-                      key={chainId}
-                      className="flex items-center space-x-2 p-3 bg-white rounded-lg border border-gray-200"
-                    >
-                      <Image
-                        src={getNetworkLogo(network.name)}
-                        alt={network.name}
-                        width={20}
-                        height={20}
-                        className="w-5 h-5"
-                      />
-                      <span className="text-sm font-medium text-gray-900">
-                        {network.name}
-                      </span>
-                    </div>
-                  );
-                })}
+                
+                {/* Arrow */}
+                <div className="text-gray-400">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </div>
+                
+                {/* Overlapping network logos */}
+                <div className="flex items-center">
+                  <div className="flex -space-x-2">
+                    {selectedChains.map((chainId, index) => {
+                      const network = supportedNetworks.find((n) => n.id === chainId);
+                      if (!network) return null;
+                      return (
+                        <div
+                          key={chainId}
+                          className="relative"
+                          style={{ zIndex: selectedChains.length - index }}
+                        >
+                          <Image
+                            src={getNetworkLogo(network.name)}
+                            alt={network.name}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform duration-200"
+                            title={network.name}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {selectedChains.length > 0 && (
+                    <span className="ml-3 text-sm text-gray-500">
+                      +{selectedChains.length} networks
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
