@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNetwork } from "@/hooks/useNetwork";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
@@ -61,9 +61,7 @@ const StepIndicator = ({ currentStep }: { currentStep: Step }) => {
             </div>
             <span
               className={`text-sm font-medium ${
-                isActive || isCompleted
-                  ? "text-blue-600"
-                  : "text-gray-500"
+                isActive || isCompleted ? "text-blue-600" : "text-gray-500"
               }`}
             >
               {step.label}
@@ -89,16 +87,16 @@ const mapChainNameToSDKFormat = (chainName: string): string => {
 };
 
 const formatEthValue = (value: number): string => {
-  if (value === 0) return '0';
-  
+  if (value === 0) return "0";
+
   // Convert to scientific notation to find the first non-zero digit
   const scientific = value.toExponential();
-  const [, exponent] = scientific.split('e');
+  const [, exponent] = scientific.split("e");
   const exp = parseInt(exponent);
-  
+
   // Calculate how many decimal places we need
   const decimalPlaces = Math.max(0, -exp + 1);
-  
+
   // Format with exactly 2 significant digits after the first non-zero
   return value.toFixed(decimalPlaces + 1);
 };
@@ -119,8 +117,110 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
   const { balance, isLoading: isBalanceLoading } = useWalletBalance();
   const { supportedNetworks } = useNetwork();
 
+  // Validation state
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
+  // Validation function
+  const validate = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    // Token name validation
+    if (!formData.tokenName.trim())
+      newErrors.tokenName = "Token name is required.";
+
+    // Token symbol validation
+    if (!formData.tokenSymbol.trim())
+      newErrors.tokenSymbol = "Token symbol is required.";
+
+    // Decimals validation
+    if (!formData.decimals.trim()) {
+      newErrors.decimals = "Decimals is required.";
+    } else {
+      const decimals = Number(formData.decimals);
+      if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) {
+        newErrors.decimals = "Decimals must be an integer between 0 and 36.";
+      }
+    }
+
+    // Total supply validation
+    if (!formData.totalSupply.trim()) {
+      newErrors.totalSupply = "Total supply is required.";
+    } else {
+      const totalSupply = Number(formData.totalSupply);
+      if (isNaN(totalSupply) || totalSupply <= 0) {
+        newErrors.totalSupply = "Total supply must be a positive number.";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Check if field has format error (invalid characters)
+  const hasFormatError = (fieldName: string) => {
+    if (fieldName === "decimals") {
+      return (
+        formData.decimals.trim() !== "" && !/^\d+$/.test(formData.decimals)
+      );
+    }
+    if (fieldName === "totalSupply") {
+      return (
+        formData.totalSupply.trim() !== "" &&
+        !/^\d+(\.\d+)?$/.test(formData.totalSupply)
+      );
+    }
+    return false;
+  };
+
+  // Check if field should show error (either format error or validation error after touched)
+  const shouldShowError = (fieldName: string) => {
+    return (
+      hasFormatError(fieldName) || (errors[fieldName] && touched[fieldName])
+    );
+  };
+
+  // Handle input change with number validation
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    // Only allow numbers for decimals and total supply
+    if (name === "decimals") {
+      if (value === "" || /^\d*$/.test(value)) {
+        onInputChange(e);
+      }
+    } else if (name === "totalSupply") {
+      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+        onInputChange(e);
+      }
+    } else {
+      onInputChange(e);
+    }
+  };
+
+  // Real-time validation effect
+  useEffect(() => {
+    if (currentStep === "details") {
+      validate();
+    }
+  }, [formData, currentStep]);
+
+  // Check if all required fields are filled
+  const isDetailsValid = () => {
+    return (
+      formData.tokenName.trim() !== "" &&
+      formData.tokenSymbol.trim() !== "" &&
+      formData.decimals.trim() !== "" &&
+      formData.totalSupply.trim() !== "" &&
+      Object.keys(errors).length === 0
+    );
+  };
+
   // Calculate total gas cost in ETH and USD
-  const totalGasInEth = Object.values(gasEstimates).reduce((sum, gas) => sum + Number(gas) / 1e18, 0);
+  const totalGasInEth = Object.values(gasEstimates).reduce(
+    (sum, gas) => sum + Number(gas) / 1e18,
+    0
+  );
   const totalGasInUsd = totalGasInEth * ethPrice;
 
   // Check if user has sufficient balance
@@ -160,7 +260,7 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
         mapChainNameToSDKFormat(currentNetwork.name),
         mapChainNameToSDKFormat(network.name)
       );
-      
+
       setGasEstimates((prev) => ({
         ...prev,
         [chainId]: gasEstimate,
@@ -168,14 +268,16 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
 
       // Show toast with gas estimate
       const gasInEth = Number(gasEstimate) / 1e18;
-      toast.success(`Estimated gas for ${network.name}: ${formatEthValue(gasInEth)} ETH`);
+      toast.success(
+        `Estimated gas for ${network.name}: ${formatEthValue(gasInEth)} ETH`
+      );
     } catch (error) {
       console.error("Error estimating gas:", error);
       toast.error(`Failed to estimate gas for ${network.name}`);
       // Remove the chain from selection if gas estimation fails
-      setSelectedChains(prev => prev.filter(id => id !== chainId));
+      setSelectedChains((prev) => prev.filter((id) => id !== chainId));
       // Also remove any existing gas estimate for this chain
-      setGasEstimates(prev => {
+      setGasEstimates((prev) => {
         const newEstimates = { ...prev };
         delete newEstimates[chainId];
         return newEstimates;
@@ -187,6 +289,7 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
 
   const handleNext = () => {
     if (currentStep === "details") {
+      if (!validate()) return;
       setCurrentStep("deploy");
     } else if (currentStep === "deploy") {
       setCurrentStep("review");
@@ -228,10 +331,21 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 name="tokenName"
                 value={formData.tokenName}
                 onChange={onInputChange}
-                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300 ${
+                  shouldShowError("tokenName")
+                    ? "border-red-400"
+                    : "border-blue-200"
+                }`}
                 placeholder="e.g., MyToken"
                 required
+                onBlur={(e) => {
+                  onInputChange(e);
+                  handleFieldBlur("tokenName");
+                }}
               />
+              {shouldShowError("tokenName") && (
+                <p className="text-xs text-red-500 mt-1">{errors.tokenName}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 font-inter">
@@ -242,10 +356,23 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 name="tokenSymbol"
                 value={formData.tokenSymbol}
                 onChange={onInputChange}
-                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300 ${
+                  shouldShowError("tokenSymbol")
+                    ? "border-red-400"
+                    : "border-blue-200"
+                }`}
                 placeholder="e.g., MTK"
                 required
+                onBlur={(e) => {
+                  onInputChange(e);
+                  handleFieldBlur("tokenSymbol");
+                }}
               />
+              {shouldShowError("tokenSymbol") && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.tokenSymbol}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 font-inter">
@@ -255,11 +382,26 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 type="number"
                 name="decimals"
                 value={formData.decimals}
-                onChange={onInputChange}
-                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                onChange={handleNumberInputChange}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300 ${
+                  shouldShowError("decimals")
+                    ? "border-red-400"
+                    : "border-blue-200"
+                }`}
                 placeholder="e.g., 18"
                 required
+                onBlur={(e) => {
+                  onInputChange(e);
+                  handleFieldBlur("decimals");
+                }}
               />
+              {shouldShowError("decimals") && (
+                <p className="text-xs text-red-500 mt-1">
+                  {hasFormatError("decimals")
+                    ? "Please enter only numbers"
+                    : errors.decimals}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 font-inter">
@@ -269,11 +411,26 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 type="number"
                 name="totalSupply"
                 value={formData.totalSupply}
-                onChange={onInputChange}
-                className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300"
+                onChange={handleNumberInputChange}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-500 placeholder:font-semibold text-gray-900 transition-all duration-200 hover:border-blue-300 ${
+                  shouldShowError("totalSupply")
+                    ? "border-red-400"
+                    : "border-blue-200"
+                }`}
                 placeholder="e.g., 1000000"
                 required
+                onBlur={(e) => {
+                  onInputChange(e);
+                  handleFieldBlur("totalSupply");
+                }}
               />
+              {shouldShowError("totalSupply") && (
+                <p className="text-xs text-red-500 mt-1">
+                  {hasFormatError("totalSupply")
+                    ? "Please enter only numbers"
+                    : errors.totalSupply}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -288,7 +445,9 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 {selectedChains.length > 0 && (
                   <div className="text-right">
                     <div className="text-sm font-medium text-gray-900">
-                      {isPriceLoading ? "Loading..." : `$${totalGasInUsd.toFixed(2)}`}
+                      {isPriceLoading
+                        ? "Loading..."
+                        : `$${totalGasInUsd.toFixed(2)}`}
                     </div>
                   </div>
                 )}
@@ -341,7 +500,10 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
               {selectedChains.length > 0 && (
                 <div className="mt-4 text-right">
                   <div className="text-sm text-gray-500">
-                    Balance: {isBalanceLoading || isPriceLoading ? "Loading..." : `$${(Number(balance) * ethPrice).toFixed(2)}`}
+                    Balance:{" "}
+                    {isBalanceLoading || isPriceLoading
+                      ? "Loading..."
+                      : `$${(Number(balance) * ethPrice).toFixed(2)}`}
                     {!hasSufficientBalance && (
                       <span className="text-red-500 ml-2">
                         (Insufficient balance)
@@ -410,19 +572,28 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                     {currentNetwork?.name}
                   </span>
                 </div>
-                
+
                 {/* Arrow */}
                 <div className="text-gray-400">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </div>
-                
+
                 {/* Overlapping network logos */}
                 <div className="flex items-center">
                   <div className="flex -space-x-2">
                     {selectedChains.map((chainId, index) => {
-                      const network = supportedNetworks.find((n) => n.id === chainId);
+                      const network = supportedNetworks.find(
+                        (n) => n.id === chainId
+                      );
                       if (!network) return null;
                       return (
                         <div
@@ -453,6 +624,11 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
           </div>
         );
     }
+  };
+
+  // Handle field blur to mark as touched
+  const handleFieldBlur = (fieldName: string) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
   };
 
   return (
@@ -499,9 +675,17 @@ export const DeployTokenModal: React.FC<DeployTokenModalProps> = ({
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={currentStep === "deploy" && !hasSufficientBalance}
+                  disabled={
+                    currentStep === "details"
+                      ? !isDetailsValid()
+                      : currentStep === "deploy" && !hasSufficientBalance
+                  }
                   className={`px-6 py-3 rounded-xl font-medium transition-all duration-200 font-inter shadow-sm hover:shadow-md ${
-                    currentStep === "deploy" && !hasSufficientBalance
+                    currentStep === "details"
+                      ? !isDetailsValid()
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                      : currentStep === "deploy" && !hasSufficientBalance
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
                   }`}
