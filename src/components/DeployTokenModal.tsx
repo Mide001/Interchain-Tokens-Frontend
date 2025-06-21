@@ -52,10 +52,8 @@ const StepIndicator = ({ currentStep }: { currentStep: Step }) => {
           >
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
-                isActive
+                isActive || isCompleted
                   ? "bg-blue-600 text-white"
-                  : isCompleted
-                  ? "bg-green-500 text-white"
                   : "bg-gray-200 text-gray-600"
               }`}
             >
@@ -63,10 +61,8 @@ const StepIndicator = ({ currentStep }: { currentStep: Step }) => {
             </div>
             <span
               className={`text-sm font-medium ${
-                isActive
+                isActive || isCompleted
                   ? "text-blue-600"
-                  : isCompleted
-                  ? "text-green-500"
                   : "text-gray-500"
               }`}
             >
