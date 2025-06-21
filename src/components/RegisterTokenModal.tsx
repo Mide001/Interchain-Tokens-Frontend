@@ -191,73 +191,92 @@ export const RegisterTokenModal: React.FC<RegisterTokenModalProps> = ({
       case "select":
         return (
           <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-xl">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-sm font-medium text-gray-900">
+            <div className="bg-gray-50 p-6 rounded-xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-medium text-gray-900">
                   Select networks to register your token on
                 </h3>
-                {selectedChains.length > 0 && (
-                  <div className="text-right">
-                    <div className="text-sm font-medium text-gray-900">
-                      {isPriceLoading ? "Loading..." : `$${totalGasInUsd.toFixed(2)}`}
-                    </div>
-                  </div>
-                )}
               </div>
-              <div className="space-y-3">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {availableNetworks.map((network) => {
                   const isSelected = selectedChains.includes(network.id);
                   const gasEstimate = gasEstimates[network.id];
                   const isEstimating = isEstimatingGas && isSelected;
 
                   return (
-                    <label
+                    <div
                       key={network.id}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                      onClick={() => !isEstimatingGas && handleChainSelection(network.id)}
+                      className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                        isSelected
+                          ? "border-blue-500 bg-white"
+                          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                      } ${isEstimatingGas ? "cursor-not-allowed" : ""}`}
                     >
+                      {/* Selection indicator */}
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                      
                       <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleChainSelection(network.id)}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          disabled={isEstimatingGas}
-                        />
-                        <div className="flex items-center space-x-2">
+                        <div className="relative">
                           <Image
                             src={getNetworkLogo(network.name)}
                             alt={network.name}
-                            width={20}
-                            height={20}
-                            className="w-5 h-5 rounded-full"
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full"
                           />
-                          <span className="text-sm font-medium text-gray-900">
-                            {network.name}
-                          </span>
+                          {isEstimating && (
+                            <div className="absolute inset-0 bg-white/80 rounded-full flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{network.name}</h4>
+                          {isSelected && gasEstimate && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {formatEthValue(Number(gasEstimate) / 1e18)} ETH
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center">
-                        {isEstimating ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                        ) : isSelected && gasEstimate ? (
-                          <span className="text-sm text-gray-500 ml-2">
-                            {formatEthValue(Number(gasEstimate) / 1e18)} ETH
-                          </span>
-                        ) : null}
-                      </div>
-                    </label>
+                    </div>
                   );
                 })}
               </div>
+              
               {selectedChains.length > 0 && (
-                <div className="mt-4 text-right">
-                  <div className="text-sm text-gray-500">
-                    Balance: {isBalanceLoading || isPriceLoading ? "Loading..." : `$${(Number(balance) * ethPrice).toFixed(2)}`}
-                    {!hasSufficientBalance && (
-                      <span className="text-red-500 ml-2">
-                        (Insufficient balance)
-                      </span>
-                    )}
+                <div className="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-900">Total Cost</span>
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-900">
+                        {formatEthValue(totalGasInEth)} ETH
+                        {!isPriceLoading && (
+                          <span className="ml-2 text-xs text-gray-400">
+                            (${totalGasInUsd.toFixed(2)})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Balance: {isBalanceLoading || isPriceLoading
+                          ? "Loading..."
+                          : `$${(Number(balance) * ethPrice).toFixed(2)}`}
+                        {!hasSufficientBalance && (
+                          <span className="text-red-500 ml-1">
+                            (Insufficient)
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
